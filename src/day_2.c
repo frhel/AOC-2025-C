@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "timer.h"
-#include <math.h>
 
 // Problem description: https://adventofcode.com/2025/day/2
 
