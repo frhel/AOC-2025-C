@@ -17,6 +17,7 @@ struct Ids {
     int ranges_len;
 };
 
+
 // Just so I don't have to keep rewriting the loop for debugging
 // void print_ranges(struct Range arr[], int len) {
 //     for (int i = 0; i < len; i++) {
@@ -74,6 +75,12 @@ int solve_part1(struct Ids *ids) {
             // Check if ID is in range and increment count if so
             if (ids->id[i] >= ids->range[r].lower && ids->id[i] <= ids->range[r].upper) {
                 count++;
+                range_start = r; // Save range index to reduce search space
+                break;
+            } else if (ids->id[i] < ids->range[r].lower) {
+                // If the ID is less than the lower bound of this range,
+                // it won't be in any further ranges since they are sorted
+                break;
             }
         }
     }
@@ -86,10 +93,10 @@ long long solve_part2(struct Ids *ids) {
 
     // We've already merged all ranges, so we can just sum their sizes
     for (int i = 0; i < ids->ranges_len; i++) {
-        // Add 1 to account for inclusive range
-        total += ids->range[i].upper + 1 - ids->range[i].lower;
+        total += ids->range[i].upper - ids->range[i].lower;
     }
-    return total;
+    // Add the number of IDs to account for inclusive ranges
+    return total + ids->ranges_len;
 }
 
 // For use with qsort() to sort ranges by lower bound
@@ -103,6 +110,19 @@ int compare_ranges(const void *a, const void *b) {
     // return the difference because of potential overflow
     if (r1->lower < r2->lower) return -1;
     if (r1->lower > r2->lower) return 1;
+    return 0;
+}
+
+int compare_ids(const void *a, const void *b) {
+    // Have to typecast to long long pointers first
+    // because qsort expects void pointers
+    long long *id1 = (long long *)a;
+    long long *id2 = (long long *)b;
+    
+    // qsort expects an integer return value so we can't just
+    // return the difference because of potential overflow
+    if (*id1 < *id2) return -1;
+    if (*id1 > *id2) return 1;
     return 0;
 }
 
@@ -136,12 +156,18 @@ int main() {
     struct Ids ids;
 
     load_data(&ids);
+    printf("%s\n", timer_checkpoint("Parsing"));
 
     // Sort ranges so we can merge them
     qsort(ids.range, ids.ranges_len, sizeof(struct Range), compare_ranges);
-    merge_ranges(&ids);
+    printf("%s\n", timer_checkpoint("Sorting Ranges"));
 
-    printf("%s\n", timer_checkpoint("Parsing"));
+    merge_ranges(&ids);
+    printf("%s\n", timer_checkpoint("Merging Ranges"));
+
+    // Sort the IDs so we can reduce the search space in part 1
+    qsort(ids.id, ids.ids_len, sizeof(long long), compare_ids);
+    printf("%s\n", timer_checkpoint("Sorting IDs"));
 
 
     int part1 = solve_part1(&ids);

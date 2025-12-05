@@ -1,10 +1,10 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include <sys/time.h>
+#include <time.h>
 
-extern struct timeval global_start;
-extern struct timeval last_checkpoint;
+extern struct timespec global_start;
+extern struct timespec last_checkpoint;
 
 void timer_start(void);
 char* timer_checkpoint(const char *label);
