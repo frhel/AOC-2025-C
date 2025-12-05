@@ -17,14 +17,14 @@ struct Ids {
     int ranges_len;
 };
 
-print_ranges(struct Range arr[], int len) {
+void print_ranges(struct Range arr[], int len) {
     for (int i = 0; i < len; i++) {
         printf("%lld-%lld\n", arr[i].lower, arr[i].upper);
     }
 }
 
 // TODO: Load and parse input
-load_data(struct Ids *ids) {
+void load_data(struct Ids *ids) {
     char line[1024];
     int count = 0;
 
@@ -88,10 +88,9 @@ int compare_ranges(const void *a, const void *b) {
 
 
 
-int merge_ranges(struct Ids *ids) {
+void merge_ranges(struct Ids *ids) {
     // Start by sorting the ranges
     qsort(ids->range, ids->ranges_len, sizeof(struct Range), compare_ranges);
-    int slow = 0;
     // printf("ID Ranges after: \n");
     // print_ranges(ids->range, ids->ranges_len);
     for (int i = 0; i < ids->ranges_len - 1; i++) {
@@ -115,12 +114,12 @@ int main() {
 
     // int because we are getting the size of the array back
     load_data(&ids);
+    merge_ranges(&ids);
     printf("%s\n", timer_checkpoint("Parsing"));
 
     // printf("ID Ranges before: \n");
     // print_ranges(ids.range, ids.ranges_len);
 
-    merge_ranges(&ids);
 
     int part1 = solve_part1(&ids);
     printf("Part 1 Answer: %d - %s\n", part1, timer_checkpoint("Part 1"));
