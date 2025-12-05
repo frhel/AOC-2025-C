@@ -21,16 +21,30 @@ void load_data(struct Map *m) {
         // Remove trailing newline
         line[strcspn(line, "\n")] = 0;
 
-        strcpy(m->map + m->length, line);
-        m->length += strlen(line);
+        strcat(m->map, line);
+        strcat(m->map, "|");
+        m->length += strlen(line) + 1;
         m->width = strlen(line);
 
         // TODO: Parse and store data
     }
 }
 
+void print_map(struct Map *m) {
+    int l = m->length;
+    char *map = m->map;
+
+    for (int i = 0; i < l; i++) {
+        if (map[i] == '|') {
+            putchar('\n');
+        } else {
+            putchar(map[i]);
+        }
+    }
+    putchar('\n');
+}
+
 int solve_part1(struct Map *m, int dirs[]) {
-    int w = m->width;
     int l = m->length;
     char *map = m->map;
     int dir_len = 8;
@@ -40,15 +54,17 @@ int solve_part1(struct Map *m, int dirs[]) {
         if (map[i] == '@') {
             int adj_count = 0;
             for (int d = 0; d < dir_len; d++) {
-                if (i + dirs[d] < 0 && i + dirs[d] >= l) {
+                int temp = i + dirs[d];
+                // printf("Curr = %d Temp: %d\n", i, i + dirs[d]);
+                if (temp < 0 || temp >= l || map[temp] == '|') {
                     continue;
                 }
-                if (map[i + dirs[d]] == '@') {
+                if (map[temp] == '@') {
                     adj_count++;
                 }
             }
             if (adj_count < 4) {
-                printf("Found one at: %d\n", i);
+                // printf("Found one at: %d\n", i);
                 total++;
             }
         }
@@ -57,10 +73,41 @@ int solve_part1(struct Map *m, int dirs[]) {
     return total;
 }
 
-int solve_part2(/* TODO: Add parameters */) {
-    // TODO: Implement solution
-    return 0;
+int solve_part2(struct Map *m, int dirs[]) {
+    int current_total = __INT_MAX__;
+    int l = m->length;
+    char *map = m->map;
+    int dir_len = 8;
+    int total = 0;
+
+    while (current_total > 0) {
+        current_total = 0;
+        for (int i = 0; i < l; i++) {
+            if (map[i] == '@') {
+                int adj_count = 0;
+                for (int d = 0; d < dir_len; d++) {
+                    int temp = i + dirs[d];
+                    // printf("Curr = %d Temp: %d\n", i, i + dirs[d]);
+                    if (temp < 0 || temp >= l || map[temp] == '|') {
+                        continue;
+                    }
+                    if (map[temp] == '@') {
+                        adj_count++;
+                    }
+                }
+                if (adj_count < 4) {
+                    // printf("Found one at: %d\n", i);
+                    current_total++;
+                    map[i] = '.';
+                }
+            }
+        }
+        total += current_total;
+    }
+
+    return total;
 }
+
 
 int main() {
     timer_start();
@@ -74,21 +121,23 @@ int main() {
     printf("%s\n", timer_checkpoint("Parsing"));
 
 
-
+    // Because of the added '|' characters for newlines
+    // we have to adjust the directions accordingly and add
+    // an extra 1 to every vertical movement on adjacent rows
     int dirs[8] = {
-        -1 * map.width-1, -1 * map.width, -1 * map.width+1, -1, 1, map.width-1, map.width, map.width+1
+        -1 * map.width-2, -1 * map.width - 1, -1 * map.width, -1, 1, map.width, map.width + 1, map.width+2
     };
 
-    printf("Map: %s\n", map.map);
 
     int part1 = solve_part1(&map, dirs);
     printf("Part 1 Answer: %d - %s\n", part1, timer_checkpoint("Part 1"));
 
-    // TODO: Solve part 2
-    // int part2 = solve_part2(/* args */);
-    // printf("Part 2 Answer: %d - %s\n", part2, timer_checkpoint("Part 2"));
+    int part2 = solve_part2(&map, dirs);
+    printf("Part 2 Answer: %d - %s\n", part2, timer_checkpoint("Part 2"));
 
-    // printf("%s\n", timer_total());
+
+
+    printf("%s\n", timer_total());
     free(map.map);
     return 0;
 }
