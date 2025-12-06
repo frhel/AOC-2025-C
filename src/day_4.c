@@ -22,7 +22,7 @@ void load_data(struct Map *m) {
         line[strcspn(line, "\n")] = 0;
 
         strcat(m->map, line);
-        strcat(m->map, "|");
+        strcat(m->map, "\n");
         m->length += strlen(line) + 1;
         m->width = strlen(line);
 
@@ -35,11 +35,7 @@ void print_map(struct Map *m) {
     char *map = m->map;
 
     for (int i = 0; i < l; i++) {
-        if (map[i] == '|') {
-            putchar('\n');
-        } else {
-            putchar(map[i]);
-        }
+        putchar(map[i]);
     }
     putchar('\n');
 }
@@ -56,7 +52,7 @@ int solve_part1(struct Map *m, int dirs[]) {
             for (int d = 0; d < dir_len; d++) {
                 int temp = i + dirs[d];
                 // printf("Curr = %d Temp: %d\n", i, i + dirs[d]);
-                if (temp < 0 || temp >= l || map[temp] == '|') {
+                if (temp < 0 || temp >= l || map[temp] == '\n') {
                     continue;
                 }
                 if (map[temp] == '@') {
@@ -88,7 +84,7 @@ int solve_part2(struct Map *m, int dirs[]) {
                 for (int d = 0; d < dir_len; d++) {
                     int temp = i + dirs[d];
                     // printf("Curr = %d Temp: %d\n", i, i + dirs[d]);
-                    if (temp < 0 || temp >= l || map[temp] == '|') {
+                    if (temp < 0 || temp >= l || map[temp] == '\n') {
                         continue;
                     }
                     if (map[temp] == '@') {
