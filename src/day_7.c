@@ -76,8 +76,14 @@ int solve_part1(struct Map *map) {
     // beams are and expand gradually with the beams.
     int start_x = map->start_x;
     int end_x = map->start_x;
+
     for (size_t row = 0; row < map->rows; row++) {       
         for (int col = start_x; col <= end_x; col++) {
+            // If we're on a point that's not a 0 or negative,
+            // we must be on a beam. Check the next row if there is a splitter
+            // If there is, propagate the beams and tally how many
+            // beams we have created directly on the grid.
+            // Else if no beam splitter, propagate the beam downwards.
             if (map->grid[row][col] > 0 && map->grid[row + 1][col] == -1) {
                 map->grid[row + 1][col + 1] += map->grid[row][col];
                 map->grid[row + 1][col - 1] += map->grid[row][col];
@@ -86,6 +92,7 @@ int solve_part1(struct Map *map) {
                 map->grid[row + 1][col] += map->grid[row][col];
             }
         }
+        // Expand the search space
         start_x--;
         end_x++;
     }
@@ -94,6 +101,8 @@ int solve_part1(struct Map *map) {
 }
 
 long long solve_part2(struct Map *map) {
+    // Just sum the last row of the pyramid
+    // Don't include negative numbers.
     long sum = 0;
     int rows = map->rows;
     for (size_t i = 0; i < map->cols; i++) {
