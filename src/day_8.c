@@ -131,17 +131,6 @@ int compare_pairs(const void *a, const void *b) {
     return 0;
 }
 
-// Sort all peers from a given list
-void sort_peers(struct Peer peers[], int count) {
-    qsort(peers, count, sizeof(struct Peer), compare_peers);
-}
-
-// Run through all boxes and sort all their peers
-void sort_all_peers(struct Box boxes[], int count) {
-    for (int i = 0; i < count; i++) {
-        sort_peers(boxes[i].peers, boxes[i].peer_count);
-    }
-}
 
 void print_peers(struct Box box, struct Box boxes[]) {
     printf("Name: %s\n", box.name);
@@ -327,7 +316,7 @@ long long solve_part2(struct Box boxes[], int count, struct Pair *shortest, int 
     for (int i = 0; i < found; i++) {
         int box1 = shortest[i].box1;
         int box2 = shortest[i].box2;
-        
+
         process_connection(box1, box2, c_sets, &c_count, boxes);
 
         if (is_single_circuit(boxes, count)) {
@@ -336,6 +325,7 @@ long long solve_part2(struct Box boxes[], int count, struct Pair *shortest, int 
             return (long long)boxes[box1].coords.x * (long long)boxes[box2].coords.x;
         }
     }
+    return -1; // Should never reach here if input is valid
 }
 
 
@@ -344,17 +334,12 @@ int main() {
     timer_start();
 
     static struct Box boxes[1024];
-
     
     int box_count = load_data(boxes);
     printf("%s\n", timer_checkpoint("Parsing"));
 
     find_peers(boxes, box_count);
     printf("%s\n", timer_checkpoint("Find Distances"));
-
-    sort_all_peers(boxes, box_count);
-    printf("%s\n", timer_checkpoint("Sort All Peers"));
-
 
     int max_pairs = (box_count * (box_count - 1)) / 2;
     struct Pair *shortest = malloc(max_pairs * sizeof(struct Pair));
