@@ -7,30 +7,35 @@
 
 // Problem description: https://adventofcode.com/2025/day/8
 
+// Struct to hold information on distances to peers
 struct Peer {
     int id;
     float dist;
 };
 
+// Struct to hold 3D point coordinates
 struct Point {
     int x;
     int y;
     int z;
 };
 
+// Struct to hold box information
 struct Box {
     char name[32];
     struct Point coords;
-    struct Peer peers[1000];
+    struct Peer peers[1000]; // Array of peers and their distances
     int peer_count;
     int c_set;
 };
 
+// Struct to hold a circuit of connected boxes
 struct Circuit {
     int boxes[1024];
     int count;
 };
 
+// Struct to hold a pair of boxes and their distance
 struct Pair {
     int box1;
     int box2;
@@ -77,7 +82,7 @@ float get_dist_3d(struct Point vec1, struct Point vec2) {
 
 // Find all neighbours of all boxes and save them with distance
 // as peers on a per-box basis
-void find_peers(struct Box boxes[], int count) {
+void calculate_distances(struct Box boxes[], int count) {
     // Calculate all distances. Start with the leftmost box and
     // loop through all other boxes to the right. Save the distance
     // to both the left and right box. Next iteration we have n-1 
@@ -107,18 +112,7 @@ void find_peers(struct Box boxes[], int count) {
     }
 }
 
-int compare_peers(const void *a, const void *b) {
-    const struct Peer *peer_a = (const struct Peer *)a;
-    const struct Peer *peer_b = (const struct Peer *)b;
-
-    // The input is floats, so we have perform the if statements
-    // instead of just returning arithmetic result as qsort
-    // expects an int
-    if (peer_a->dist < peer_b->dist) return -1;
-    if (peer_a->dist > peer_b->dist) return 1;
-    return 0;
-}
-
+// Sort the peers of each box by distance
 int compare_pairs(const void *a, const void *b) {
     const struct Pair *Pair_a = (const struct Pair *)a;
     const struct Pair *Pair_b = (const struct Pair *)b;
@@ -131,14 +125,8 @@ int compare_pairs(const void *a, const void *b) {
     return 0;
 }
 
-
-void print_peers(struct Box box, struct Box boxes[]) {
-    printf("Name: %s\n", box.name);
-    for (int i = 0; i < box.peer_count; i++) {
-        printf("Name: %s, Dist: %f\n", boxes[box.peers[i].id].name, box.peers[i].dist);
-    }
-}
-
+// Find the shortest distances between all boxes and return them
+// as an array of Pair structs
 int find_shortest_distances(struct Box boxes[], int count, struct Pair *results, int conns) {
     int max_pairs = (count * (count - 1)) / 2;
     struct Pair *all_distances = malloc(max_pairs * sizeof(struct Pair));
@@ -173,6 +161,7 @@ int find_shortest_distances(struct Box boxes[], int count, struct Pair *results,
     return result_count;
 }
 
+// Helper function to print circuits for debugging
 void print_circuits(struct Circuit c_sets[], int count) {
 
     printf("print_circuits: count=%d\n", count);
@@ -186,6 +175,7 @@ void print_circuits(struct Circuit c_sets[], int count) {
       }
 }
 
+// Comparison function for qsort to sort circuits by size
 int compare_circuits_by_size(const void *a, const void *b) {
       const struct Circuit *c1 = (const struct Circuit *)a;
       const struct Circuit *c2 = (const struct Circuit *)b;
@@ -196,17 +186,20 @@ int compare_circuits_by_size(const void *a, const void *b) {
       return 0;
   }
 
+// Sort circuits by size in descending order
 void sort_circuits_by_size(struct Circuit c_sets[], int count) {
     // sort circuits by descending size
     qsort(c_sets, count, sizeof(struct Circuit), compare_circuits_by_size);
 }
 
+// Add box1 to the circuit of box2
 void add_to_circuit(int box1, int box2, struct Circuit c_sets[], struct Box boxes[]) {
     int bc_id = boxes[box2].c_set;
     c_sets[bc_id].boxes[c_sets[bc_id].count++] = box1;
     boxes[box1].c_set = bc_id;
 }
 
+// Create a new circuit with box1 and box2
 void create_circuit(int box1, int box2, struct Circuit c_sets[], int *c_count, struct Box boxes[]) {
     c_sets[*c_count].boxes[c_sets[*c_count].count++] = box1;
     c_sets[*c_count].boxes[c_sets[*c_count].count++] = box2;
@@ -215,6 +208,7 @@ void create_circuit(int box1, int box2, struct Circuit c_sets[], int *c_count, s
     (*c_count)++;
 }
 
+// Merge two existing circuits into one if box1 and box2 already belong to different circuits
 void merge_circuits(struct Circuit c_sets[], int box1, int box2, struct Box boxes[]) {
     int set1 = boxes[box1].c_set;
     int set2 = boxes[box2].c_set;
@@ -245,6 +239,7 @@ void merge_circuits(struct Circuit c_sets[], int box1, int box2, struct Box boxe
     c_sets[source].count = 0;
 }
 
+// Process a connection between two boxes and create/update/merge circuits accordingly
 void process_connection(int box1, int box2, struct Circuit c_sets[], int *c_count, struct Box boxes[]) {
     if (boxes[box1].c_set != -1 && boxes[box2].c_set != -1) {
         // Both boxes are already in a circuit
@@ -261,40 +256,12 @@ void process_connection(int box1, int box2, struct Circuit c_sets[], int *c_coun
     }
 }
 
-int solve_part1(struct Box boxes[], int conns, struct Pair *shortest, int found) {
-    // Create the circuits array
-    static struct Circuit c_sets[1024];
-    int c_count = 0;
-
-    for (int i = 0; i < conns && i < found; i++) {
-        int box1 = shortest[i].box1;
-        int box2 = shortest[i].box2;
-
-        process_connection(box1, box2, c_sets, &c_count, boxes);
-    }
-
-    struct Circuit active_circuits[1024];
-    int active_count = 0;
-    for (int i = 0; i < c_count; i++) {
-        if (c_sets[i].count > 0) {
-            active_circuits[active_count++] = c_sets[i];
-        }
-    }
-
-    // Calculate the product of the 3 largest circuits
-    sort_circuits_by_size(active_circuits, active_count);
-    int sum = 1;
-    for (int i = 0; i < 3; i++) {
-        int c_size = active_circuits[i].count;
-        sum = sum * c_size;
-    }
-
-    return sum;
-}
-
+// Used to check if we have managed to connect all boxes into a single circuit
 bool is_single_circuit(struct Box boxes[], int count) {
+    // Get the circuit set of the first box
     int c_set = boxes[0].c_set;
     for (int i = 1; i < count; i++) {
+        // If any box has a different circuit set, return false
         if (boxes[i].c_set != c_set) {
             return false;
         }
@@ -302,6 +269,35 @@ bool is_single_circuit(struct Box boxes[], int count) {
     return true;
 }
 
+int solve_part1(struct Box boxes[], int conns, struct Pair *shortest, int found) {
+    // Create the circuits array
+    static struct Circuit c_sets[1024];
+    // Track the circuits array size
+    int c_count = 0;
+
+    // Loop through the shortest distances and connect boxes
+    // until we have reached the specified number of connections
+    for (int i = 0; i < conns; i++) {
+        int box1 = shortest[i].box1;
+        int box2 = shortest[i].box2;
+
+        // Process the connection between box1 and box2
+        process_connection(box1, box2, c_sets, &c_count, boxes);
+    }
+
+    // Calculate the product of the 3 largest circuits
+    sort_circuits_by_size(c_sets, c_count);
+    int sum = 1;
+    for (int i = 0; i < 3; i++) {
+        int c_size = c_sets[i].count;
+        sum = sum * c_size;
+    }
+
+    return sum;
+}
+
+// Basically same as part 1 but we keep adding connections
+// until all boxes are in a single circuit
 long long solve_part2(struct Box boxes[], int count, struct Pair *shortest, int found) {
     // Reset circuit sets
     for (int i = 0; i < count; i++) boxes[i].c_set = -1;
@@ -311,12 +307,16 @@ long long solve_part2(struct Box boxes[], int count, struct Pair *shortest, int 
 
     // Reset the circuits array from part 1 since it's static
     memset(c_sets, 0, sizeof(c_sets));
+    // Track the circuits array size
     int c_count = 0;
 
+    // Loop through the shortest distances and keep connecting boxes
+    // until all boxes are in a single circuit
     for (int i = 0; i < found; i++) {
         int box1 = shortest[i].box1;
         int box2 = shortest[i].box2;
 
+        // Process the connection between box1 and box2
         process_connection(box1, box2, c_sets, &c_count, boxes);
 
         if (is_single_circuit(boxes, count)) {
@@ -338,7 +338,7 @@ int main() {
     int box_count = load_data(boxes);
     printf("%s\n", timer_checkpoint("Parsing"));
 
-    find_peers(boxes, box_count);
+    calculate_distances(boxes, box_count);
     printf("%s\n", timer_checkpoint("Find Distances"));
 
     int max_pairs = (box_count * (box_count - 1)) / 2;
