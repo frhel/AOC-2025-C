@@ -220,21 +220,11 @@ void merge_circuits(struct Circuit c_sets[], int box1, int box2, struct Box boxe
     for (int b = 0; b < c_sets[source].count; b++) {
         int box_id = c_sets[source].boxes[b];
         boxes[box_id].c_set = target;
-                }
+    }
     // Append all boxes from source to target
     for (int i = 0; i < c_sets[source].count; i++) {
-        // Check if box is already in target circuit
         int box_id = c_sets[source].boxes[i];
-        bool found = false;
-        for (int j = 0; j < c_sets[target].count; j++) {
-            if (c_sets[target].boxes[j] == box_id) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            c_sets[target].boxes[c_sets[target].count++] = box_id;
-        }
+        c_sets[target].boxes[c_sets[target].count++] = box_id;
     }
     c_sets[source].count = 0;
 }
@@ -303,10 +293,8 @@ long long solve_part2(struct Box boxes[], int count, struct Pair *shortest, int 
     for (int i = 0; i < count; i++) boxes[i].c_set = -1;
 
     // Create the circuits array
-    static struct Circuit c_sets[1024];
+    struct Circuit c_sets[1024] = {0};
 
-    // Reset the circuits array from part 1 since it's static
-    memset(c_sets, 0, sizeof(c_sets));
     // Track the circuits array size
     int c_count = 0;
 
